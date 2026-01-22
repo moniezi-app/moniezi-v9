@@ -3885,7 +3885,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                       </button>
                     </div>
                 </div>
-                <div id="visible-pdf-preview-content" className="p-8 md:p-12 bg-white min-h-[1000px] text-slate-900">
+                <div id="visible-pdf-preview-content" className="p-8 md:p-12 bg-white min-h-[1000px]">
                     {selectedInvoiceForDoc.status === 'void' && <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"><div className="transform -rotate-45 text-red-50 text-[150px] font-extrabold opacity-50 border-8 border-red-50 p-10 rounded-3xl">VOID</div></div>}
                     <div className={`flex ${settings.showLogoOnInvoice && settings.logoAlignment === 'center' ? 'flex-col items-center text-center' : 'flex-row justify-between items-start'} border-b border-slate-100 pb-8 mb-8 gap-6 z-10 relative`}>
                         <div className={`flex-1 ${settings.showLogoOnInvoice && settings.logoAlignment === 'center' ? 'w-full' : ''}`}>
@@ -3933,8 +3933,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                             {(selectedInvoiceForDoc.items || []).map((item, idx) => (
                                 <div key={item.id || idx} className="border-b border-slate-100 pb-3 grid grid-cols-12 gap-4 items-start">
                                     <div className="col-span-6"><span className="font-bold text-slate-800 text-sm block">{item.description}</span></div>
-                                    <div className="col-span-2 text-right text-sm font-medium text-slate-700">{item.quantity}</div>
-                                    <div className="col-span-2 text-right text-sm font-medium text-slate-700">{formatCurrency.format(item.rate)}</div>
+                                    <div className="col-span-2 text-right text-sm font-medium text-slate-600">{item.quantity}</div>
+                                    <div className="col-span-2 text-right text-sm font-medium text-slate-600">{formatCurrency.format(item.rate)}</div>
                                     <div className="col-span-2 text-right text-sm font-bold text-slate-900">{formatCurrency.format(item.quantity * item.rate)}</div>
                                 </div>
                             ))}
@@ -3947,14 +3947,14 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                             {selectedInvoiceForDoc.taxRate ? (<div className="flex justify-between text-sm"><span className="font-bold text-slate-500">Tax ({selectedInvoiceForDoc.taxRate}%)</span><span className="font-bold text-slate-900">{formatCurrency.format(((selectedInvoiceForDoc.subtotal || 0) - (selectedInvoiceForDoc.discount || 0)) * (selectedInvoiceForDoc.taxRate / 100))}</span></div>) : null}
                             {selectedInvoiceForDoc.shipping ? (<div className="flex justify-between text-sm"><span className="font-bold text-slate-500">Shipping</span><span className="font-bold text-slate-900">{formatCurrency.format(selectedInvoiceForDoc.shipping)}</span></div>) : null}
                             <div className="h-px bg-slate-900 my-2"></div>
-                            <div className="flex justify-between items-end"><span className="font-extrabold text-lg text-slate-900 uppercase tracking-wider">Total</span><span className="font-extrabold text-2xl text-slate-900">{formatCurrency.format(selectedInvoiceForDoc.amount)}</span></div>
+                            <div className="flex justify-between items-end"><span className="font-extrabold text-lg text-slate-900 uppercase tracking-wider">Total</span><span className="font-extrabold text-xl text-slate-900">{formatCurrency.format(selectedInvoiceForDoc.amount)}</span></div>
                             {selectedInvoiceForDoc.status === 'paid' && <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded mt-2"><span className="font-bold text-sm uppercase">Amount Paid</span><span className="font-bold">{formatCurrency.format(selectedInvoiceForDoc.amount)}</span></div>}
                         </div>
                     </div>
                     <div className="mt-auto z-10 relative">
                         <div className="grid grid-cols-2 gap-8 border-t border-slate-100 pt-8">
-                            <div>{selectedInvoiceForDoc.notes && (<><h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Notes</h4><p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{selectedInvoiceForDoc.notes}</p></>)}</div>
-                            <div>{(selectedInvoiceForDoc.terms || settings.payPrefs.length > 0) && (<><h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Terms & Payment</h4>{selectedInvoiceForDoc.terms && <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap mb-3">{selectedInvoiceForDoc.terms}</p>}{settings.payPrefs.length > 0 && (<div className="text-xs font-bold text-slate-500 bg-slate-50 p-3 rounded inline-block w-full">Accepted Methods: {settings.payPrefs.join(', ')}</div>)}</>)}</div>
+                            <div>{selectedInvoiceForDoc.notes && (<><h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Notes</h4><p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{selectedInvoiceForDoc.notes}</p></>)}</div>
+                            <div>{(selectedInvoiceForDoc.terms || settings.payPrefs.length > 0) && (<><h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Terms & Payment</h4>{selectedInvoiceForDoc.terms && <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap mb-3">{selectedInvoiceForDoc.terms}</p>}{settings.payPrefs.length > 0 && (<div className="text-xs font-bold text-slate-500 bg-slate-50 p-3 rounded inline-block w-full">Accepted Methods: {settings.payPrefs.join(', ')}</div>)}</>)}</div>
                         </div>
                         <div className="mt-12 text-center text-xs text-slate-400 font-bold uppercase tracking-widest">Thank you for your business</div>
                     </div>
@@ -3994,7 +3994,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                       </button>
                     </div>
                 </div>
-                <div id="visible-estimate-pdf-preview-content" className="p-8 md:p-12 bg-white min-h-[1000px] text-slate-900">
+                <div id="visible-estimate-pdf-preview-content" className="p-8 md:p-12 bg-white min-h-[1000px]">
                     {selectedEstimateForDoc.status === 'void' && <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"><div className="transform -rotate-45 text-red-50 text-[150px] font-extrabold opacity-50 border-8 border-red-50 p-10 rounded-3xl">VOID</div></div>}
                     
                     {/* Header with Business Info */}
@@ -4025,7 +4025,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                       <div className="mb-8 z-10 relative">
                         <div className="bg-slate-50 rounded-lg p-6 border-l-4" style={{ borderColor: settings.brandColor || '#3b82f6' }}>
                           <h3 className="text-2xl font-bold text-slate-900 mb-1">{(selectedEstimateForDoc as any).projectTitle}</h3>
-                          {selectedEstimateForDoc.description && <p className="text-slate-700">{selectedEstimateForDoc.description}</p>}
+                          {selectedEstimateForDoc.description && <p className="text-slate-600">{selectedEstimateForDoc.description}</p>}
                         </div>
                       </div>
                     )}
@@ -4073,8 +4073,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                             {(selectedEstimateForDoc.items || []).map((item, idx) => (
                                 <div key={item.id || idx} className="border-b border-slate-100 pb-3 grid grid-cols-12 gap-4 items-start">
                                     <div className="col-span-6"><span className="font-bold text-slate-800 text-sm block">{item.description}</span></div>
-                                    <div className="col-span-2 text-right text-sm font-medium text-slate-700">{item.quantity}</div>
-                                    <div className="col-span-2 text-right text-sm font-medium text-slate-700">{formatCurrency.format(item.rate)}</div>
+                                    <div className="col-span-2 text-right text-sm font-medium text-slate-600">{item.quantity}</div>
+                                    <div className="col-span-2 text-right text-sm font-medium text-slate-600">{formatCurrency.format(item.rate)}</div>
                                     <div className="col-span-2 text-right text-sm font-bold text-slate-900">{formatCurrency.format(item.quantity * item.rate)}</div>
                                 </div>
                             ))}
@@ -4088,7 +4088,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                             {selectedEstimateForDoc.discount ? (<div className="flex justify-between text-sm text-emerald-600"><span className="font-bold">Discount</span><span className="font-bold">-{formatCurrency.format(selectedEstimateForDoc.discount)}</span></div>) : null}
                             {selectedEstimateForDoc.taxRate ? (<div className="flex justify-between text-sm"><span className="font-bold text-slate-500">Tax ({selectedEstimateForDoc.taxRate}%)</span><span className="font-bold text-slate-900">{formatCurrency.format(((selectedEstimateForDoc.subtotal || 0) - (selectedEstimateForDoc.discount || 0)) * (selectedEstimateForDoc.taxRate / 100))}</span></div>) : null}
                             <div className="h-px bg-slate-900 my-2"></div>
-                            <div className="flex justify-between items-end"><span className="font-extrabold text-lg text-slate-900 uppercase tracking-wider">Estimated Total</span><span className="font-extrabold text-2xl text-slate-900">{formatCurrency.format(selectedEstimateForDoc.amount)}</span></div>
+                            <div className="flex justify-between items-end"><span className="font-extrabold text-lg text-slate-900 uppercase tracking-wider">Estimated Total</span><span className="font-extrabold text-xl text-slate-900">{formatCurrency.format(selectedEstimateForDoc.amount)}</span></div>
                         </div>
                     </div>
 
@@ -4109,7 +4109,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                               {selectedEstimateForDoc.notes && (
                                 <>
                                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Notes</h4>
-                                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{selectedEstimateForDoc.notes}</p>
+                                  <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{selectedEstimateForDoc.notes}</p>
                                 </>
                               )}
                             </div>
@@ -4117,7 +4117,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                               {selectedEstimateForDoc.terms && (
                                 <>
                                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Terms & Conditions</h4>
-                                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap mb-3">{selectedEstimateForDoc.terms}</p>
+                                  <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap mb-3">{selectedEstimateForDoc.terms}</p>
                                 </>
                               )}
                             </div>
@@ -4162,9 +4162,9 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                    <div className="bg-red-100 dark:bg-red-500/10 p-3 rounded-full"><AlertTriangle size={24} strokeWidth={2} /></div>
                    <h3 className="text-lg sm:text-xl font-bold">System Reset</h3>
                 </div>
-                <p className="text-slate-700 dark:text-slate-300 mb-6 font-medium leading-relaxed">Are you sure you want to delete <span className="text-slate-900 dark:text-white font-bold">all transactions and invoices</span>? This action cannot be undone.</p>
+                <p className="text-slate-600 dark:text-slate-300 mb-6 font-medium leading-relaxed">Are you sure you want to delete <span className="text-slate-900 dark:text-white font-bold">all transactions and invoices</span>? This action cannot be undone.</p>
                 <div className="flex gap-3">
-                   <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-3 font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                   <button onClick={() => setShowResetConfirm(false)} className="flex-1 py-3 font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
                    <button onClick={performReset} className="flex-1 py-3 font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-lg shadow-red-500/20 transition-colors">Yes, Delete All</button>
                 </div>
             </div>
@@ -4181,9 +4181,9 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                     </div>
                     <h3 className="text-lg sm:text-xl font-bold">Delete invoice?</h3>
                 </div>
-                <p className="text-slate-700 dark:text-slate-300 mb-6 font-medium leading-relaxed">This will permanently delete this invoice and cannot be undone.</p>
+                <p className="text-slate-600 dark:text-slate-300 mb-6 font-medium leading-relaxed">This will permanently delete this invoice and cannot be undone.</p>
                 <div className="flex gap-3">
-                   <button onClick={() => setInvoiceToDelete(null)} className="flex-1 py-3 font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                   <button onClick={() => setInvoiceToDelete(null)} className="flex-1 py-3 font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
                    <button onClick={confirmDeleteInvoice} className="flex-1 py-3 font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg shadow-lg shadow-red-500/20 transition-colors">Delete</button>
                 </div>
             </div>
@@ -4198,11 +4198,11 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                     <div className="bg-blue-100 dark:bg-blue-500/10 p-3 rounded-full"><RotateCcw size={24} strokeWidth={2} /></div>
                     <h3 className="text-lg sm:text-xl font-bold">Restore Backup?</h3>
                 </div>
-                <p className="text-slate-700 dark:text-slate-300 mb-6 font-medium leading-relaxed">
+                <p className="text-slate-600 dark:text-slate-300 mb-6 font-medium leading-relaxed">
                     This will <span className="text-slate-900 dark:text-white font-bold">replace all current data</span> with the backup from <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">{pendingBackupData?.metadata?.timestamp?.split('T')[0] || 'Unknown Date'}</span>.
                 </p>
                 <div className="flex gap-3">
-                    <button onClick={() => { setShowRestoreModal(false); setPendingBackupData(null); }} className="flex-1 py-3 font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
+                    <button onClick={() => { setShowRestoreModal(false); setPendingBackupData(null); }} className="flex-1 py-3 font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">Cancel</button>
                     <button onClick={performRestore} className="flex-1 py-3 font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg shadow-blue-500/20 transition-colors">Restore Data</button>
                 </div>
             </div>
@@ -4212,10 +4212,10 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
       <header className={`no-print flex items-center justify-between px-4 sm:px-6 md:px-8 py-6 sm:py-8 sticky top-0 bg-slatebg/90 dark:bg-slate-950/90 backdrop-blur-xl z-50 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300`}>
         <Logo onClick={() => setCurrentPage(Page.Dashboard)} />
         <div className="flex gap-1.5 sm:gap-2 flex-shrink-0">
-           <button onClick={toggleTheme} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-blue-600 transition-all shadow-md">{theme === 'dark' ? <Sun size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /> : <Moon size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} />}</button>
+           <button onClick={toggleTheme} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-all shadow-md">{theme === 'dark' ? <Sun size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /> : <Moon size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} />}</button>
            <button
              onClick={() => setShowInsights(true)}
-             className="relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-purple-600 transition-all shadow-md"
+             className="relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-purple-600 transition-all shadow-md"
              title="Insights"
            >
              <BrainCircuit size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} />
@@ -4225,7 +4225,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                </span>
              )}
            </button>
-           <button onClick={() => setCurrentPage(Page.Settings)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-950 transition-all shadow-md"><Settings size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /></button>
+           <button onClick={() => setCurrentPage(Page.Settings)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-950 transition-all shadow-md"><Settings size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /></button>
         </div>
       </header>
 
