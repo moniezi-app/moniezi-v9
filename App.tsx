@@ -3220,117 +3220,91 @@ TIMELINE: Assumes 48-72hr feedback turnaround.`,
      setInvoices(prev => prev.map(i => i.id === updatedInvoice.id ? updatedInvoice : i));
      setSelectedInvoiceForDoc(updatedInvoice); setIsPdfPreviewOpen(true);
   };
-
-// PDF export should NOT auto-download when preview opens.
-// User opens preview first, then explicitly clicks "Download PDF".
-const downloadInvoicePdfFromPreview = async () => {
-  if (!selectedInvoiceForDoc || isGeneratingPdf) return;
-  setIsGeneratingPdf(true);
-  try {
-    // allow modal to render fully
-    await new Promise(resolve => setTimeout(resolve, 150));
-    const element = document.getElementById('visible-pdf-preview-content');
-    if (!element) throw new Error('Preview element not found');
-    const images = Array.from(element.querySelectorAll('img'));
-    await Promise.all(images.map(img => {
-      // @ts-ignore
-      if ((img as any).complete) return Promise.resolve();
-      return new Promise(resolve => {
-        // @ts-ignore
-        img.onload = resolve;
-        // @ts-ignore
-        img.onerror = resolve;
-        setTimeout(resolve, 2000);
-      });
-    }));
-
-    const opt = {
-      margin: [10, 10, 10, 10],
-      filename: `Invoice_${selectedInvoiceForDoc.client.replace(/[^a-z0-9]/gi, '_')}_${selectedInvoiceForDoc.date}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    };
-
-    await (window as any).html2pdf().set(opt).from(element).save();
-    showToast('PDF Downloaded', 'success');
-    setTimeout(() => setIsPdfPreviewOpen(false), 300);
-  } catch (error) {
-    console.error('PDF failed:', error);
-    showToast('Export failed', 'error');
-  } finally {
-    setIsGeneratingPdf(false);
-  }
-};
-
-const downloadEstimatePdfFromPreview = async () => {
-  if (!selectedEstimateForDoc || isGeneratingEstimatePdf) return;
-  setIsGeneratingEstimatePdf(true);
-  try {
-    await new Promise(resolve => setTimeout(resolve, 150));
-    const element = document.getElementById('visible-estimate-pdf-preview-content');
-    if (!element) throw new Error('Preview element not found');
-    const images = Array.from(element.querySelectorAll('img'));
-    await Promise.all(images.map(img => {
-      // @ts-ignore
-      if ((img as any).complete) return Promise.resolve();
-      return new Promise(resolve => {
-        // @ts-ignore
-        img.onload = resolve;
-        // @ts-ignore
-        img.onerror = resolve;
-        setTimeout(resolve, 2000);
-      });
-    }));
-
-    // Keep exact same PDF sizing logic as current code (dynamic height)
-    const contentWidth = element.scrollWidth;
-    const contentHeight = element.scrollHeight;
-    const pxToMm = 0.264583;
-    const pageWidthMm = 210; // A4 width
-    const marginMm = 10;
-    const contentWidthMm = pageWidthMm - (marginMm * 2);
-    const scaleFactor = contentWidthMm / (contentWidth * pxToMm);
-    const pageHeightMm = Math.ceil((contentHeight * pxToMm * scaleFactor) + (marginMm * 2) + 10);
-
-    const opt = {
-      margin: [marginMm, marginMm, marginMm, marginMm],
-      filename: `Estimate_${selectedEstimateForDoc.client.replace(/[^a-z0-9]/gi, '_')}_${selectedEstimateForDoc.date}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        scrollY: 0,
-        scrollX: 0,
-        windowWidth: contentWidth,
-        windowHeight: contentHeight,
-      },
-      jsPDF: {
-        unit: 'mm',
-        format: [pageWidthMm, Math.max(297, pageHeightMm)],
-        orientation: 'portrait',
-        compress: true,
-      },
-      pagebreak: { mode: 'avoid-all', avoid: ['tr', 'td', '.page-break-avoid'] },
-    };
-
-    await (window as any).html2pdf().set(opt).from(element).save();
-    showToast('PDF Downloaded', 'success');
-    setTimeout(() => setIsEstimatePdfPreviewOpen(false), 300);
-  } catch (error) {
-    console.error('Estimate PDF failed:', error);
-    showToast('Export failed', 'error');
-  } finally {
-    setIsGeneratingEstimatePdf(false);
-  }
-};
-
-
   const handleExportPLPDF = () => {
     setPlExportRequested(true);
     setShowPLPreview(true);
   };
+
+
+  
+  
+  // PDF preview: generate ONLY when user taps Download
+  const downloadInvoicePdfFromPreview = async () => {
+    if (!selectedInvoiceForDoc || isGeneratingPdf) return;
+    setIsGeneratingPdf(true);
+    try {
+      // allow layout/images to settle
+      await new Promise((r) => setTimeout(r, 250));
+      const element = document.getElementById('visible-pdf-preview-content');
+      if (!element) throw new Error("Preview element not found");
+
+      const images = Array.from(element.querySelectorAll('img'));
+      await Promise.all(images.map((img) => {
+        if ((img as HTMLImageElement).complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          (img as HTMLImageElement).onload = () => resolve(true);
+          (img as HTMLImageElement).onerror = () => resolve(true);
+          setTimeout(() => resolve(true), 2000);
+        });
+      }));
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `Invoice_${selectedInvoiceForDoc.client.replace(/[^a-z0-9]/gi, '_')}_${selectedInvoiceForDoc.date}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      await (window as any).html2pdf().set(opt).from(element).save();
+      showToast("PDF Downloaded", "success");
+    } catch (error) {
+      console.error("PDF failed:", error);
+      showToast("Export failed", "error");
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  // Auto-generate Estimate PDF when preview opens
+  
+  // Estimate PDF preview: generate ONLY when user taps Download
+  const downloadEstimatePdfFromPreview = async () => {
+    if (!selectedEstimateForDoc || isGeneratingEstimatePdf) return;
+    setIsGeneratingEstimatePdf(true);
+    try {
+      await new Promise((r) => setTimeout(r, 250));
+      const element = document.getElementById('visible-estimate-pdf-preview-content');
+      if (!element) throw new Error("Preview element not found");
+
+      const images = Array.from(element.querySelectorAll('img'));
+      await Promise.all(images.map((img) => {
+        if ((img as HTMLImageElement).complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          (img as HTMLImageElement).onload = () => resolve(true);
+          (img as HTMLImageElement).onerror = () => resolve(true);
+          setTimeout(() => resolve(true), 2000);
+        });
+      }));
+
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `Estimate_${selectedEstimateForDoc.client.replace(/[^a-z0-9]/gi, '_')}_${selectedEstimateForDoc.date}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      await (window as any).html2pdf().set(opt).from(element).save();
+      showToast("PDF Downloaded", "success");
+    } catch (error) {
+      console.error("PDF failed:", error);
+      showToast("Export failed", "error");
+    } finally {
+      setIsGeneratingEstimatePdf(false);
+    }
+  };
+
 
   useEffect(() => {
     let isMounted = true;
@@ -3857,144 +3831,24 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
 
       {isPdfPreviewOpen && selectedInvoiceForDoc && (
         <div className="fixed inset-0 z-[99999] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="relative w-full max-w-[800px] bg-white text-slate-900 shadow-2xl overflow-auto max-h-[90vh] rounded-lg">
+            <div className="relative w-full max-w-[800px] bg-white text-slate-900 shadow-2xl overflow-y-auto max-h-[90vh] rounded-lg">
                 <div className="sticky top-0 left-0 right-0 bg-white/90 backdrop-blur border-b border-slate-100 p-4 flex justify-between items-center z-50">
                     <div className="flex items-center gap-2">
-                       {isGeneratingPdf ? <Loader2 className="animate-spin text-blue-600" /> : <FileText className="text-slate-700" />}
-                       <span className="font-bold text-sm uppercase tracking-wider">
-                         {isGeneratingPdf ? 'Generating PDF…' : 'Invoice Preview'}
-                       </span>
+                      <FileText className="text-slate-700" />
+                      <span className="font-bold text-sm uppercase tracking-wider">ESTIMATE PREVIEW</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setIsPdfPreviewOpen(false)}
-                        className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
-                        disabled={isGeneratingPdf}
-                      >
+                      <button onClick={() => setIsEstimatePdfPreviewOpen(false)} className="px-3 py-2 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-semibold">
                         Back to Edit
                       </button>
-                      <button
-                        onClick={downloadInvoicePdfFromPreview}
-                        className="px-3 py-2 text-xs font-bold rounded-lg bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60"
-                        disabled={isGeneratingPdf}
-                      >
+                      <button onClick={downloadEstimatePdfFromPreview} className="px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm font-semibold flex items-center gap-2" disabled={isGeneratingEstimatePdf}>
+                        {isGeneratingEstimatePdf ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
                         Download PDF
                       </button>
-                      <button onClick={() => setIsPdfPreviewOpen(false)} className="p-2 hover:bg-slate-100 rounded-full" aria-label="Close preview">
-                        <X size={20} />
-                      </button>
+                      <button onClick={() => setIsEstimatePdfPreviewOpen(false)} className="p-2 hover:bg-slate-100 rounded-full"><X size={20} /></button>
                     </div>
                 </div>
-                <div id="visible-pdf-preview-content" className="p-8 md:p-12 bg-white min-h-[1000px] w-[794px] mx-auto">
-                    {selectedInvoiceForDoc.status === 'void' && <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"><div className="transform -rotate-45 text-red-50 text-[150px] font-extrabold opacity-50 border-8 border-red-50 p-10 rounded-3xl">VOID</div></div>}
-                    <div className={`flex ${settings.showLogoOnInvoice && settings.logoAlignment === 'center' ? 'flex-col items-center text-center' : 'flex-row justify-between items-start'} border-b border-slate-100 pb-8 mb-8 gap-6 z-10 relative`}>
-                        <div className={`flex-1 ${settings.showLogoOnInvoice && settings.logoAlignment === 'center' ? 'w-full' : ''}`}>
-                            {settings.showLogoOnInvoice && settings.businessLogo && <img src={settings.businessLogo} alt="Logo" className={`h-20 w-auto object-contain mb-4 ${settings.logoAlignment === 'center' ? 'mx-auto' : ''}`} />}
-                            <h1 className="text-3xl font-extrabold uppercase tracking-tight text-slate-900 mb-2 font-brand">{settings.businessName}</h1>
-                            <div className="text-sm text-slate-600 font-medium space-y-1">
-                                <p>{settings.ownerName}</p>
-                                {(settings.businessEmail || settings.businessPhone) && <p className={`flex flex-wrap gap-3 ${settings.logoAlignment === 'center' ? 'justify-center' : ''}`}>{settings.businessEmail && <span>{settings.businessEmail}</span>}{settings.businessPhone && <span>• {settings.businessPhone}</span>}</p>}
-                                {settings.businessAddress && <p className="leading-tight pt-1">{settings.businessAddress}</p>}
-                                {settings.businessWebsite && <p className="text-blue-600 pt-1" style={{ color: settings.brandColor }}>{settings.businessWebsite}</p>}
-                            </div>
-                        </div>
-                        <div className={`text-left ${settings.showLogoOnInvoice && settings.logoAlignment === 'center' ? 'w-full mt-6 flex flex-col items-center' : 'text-right flex-1'}`}>
-                            <h2 className="text-5xl font-extrabold tracking-tighter mb-4 font-brand" style={{ color: settings.brandColor || '#e2e8f0' }}>INVOICE</h2>
-                            <div className={`space-y-2 ${settings.showLogoOnInvoice && settings.logoAlignment === 'center' ? 'w-full max-w-sm' : ''}`}>
-                                <div className="flex justify-between md:justify-end gap-8"><span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Invoice #</span><span className="text-sm font-bold text-slate-900">{selectedInvoiceForDoc.number || selectedInvoiceForDoc.id.substring(selectedInvoiceForDoc.id.length - 6).toUpperCase()}</span></div>
-                                <div className="flex justify-between md:justify-end gap-8"><span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Date</span><span className="text-sm font-bold text-slate-900">{selectedInvoiceForDoc.date}</span></div>
-                                <div className="flex justify-between md:justify-end gap-8"><span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Due</span><span className="text-sm font-bold text-slate-900">{selectedInvoiceForDoc.due}</span></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex gap-10 mb-12 z-10 relative">
-                        <div className="flex-1">
-                            <h3 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-3">Bill To</h3>
-                            <div className="text-lg font-bold text-slate-900">{selectedInvoiceForDoc.client}</div>
-                            {selectedInvoiceForDoc.clientCompany && <div className="text-base font-semibold text-slate-700 mt-0.5">{selectedInvoiceForDoc.clientCompany}</div>}
-                            <div className="text-sm text-slate-600 mt-1 space-y-0.5">{selectedInvoiceForDoc.clientEmail && <div>{selectedInvoiceForDoc.clientEmail}</div>}{selectedInvoiceForDoc.clientAddress && <div className="whitespace-pre-line">{selectedInvoiceForDoc.clientAddress}</div>}</div>
-                        </div>
-                        {(selectedInvoiceForDoc.poNumber || settings.businessTaxId) && (
-                            <div className="flex-1 text-right">
-                                <h3 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-3">Details</h3>
-                                {selectedInvoiceForDoc.poNumber && <div className="mb-2"><span className="text-xs font-bold text-slate-600 block">PO Number</span><span className="text-sm font-bold text-slate-900">{selectedInvoiceForDoc.poNumber}</span></div>}
-                                {settings.businessTaxId && <div><span className="text-xs font-bold text-slate-600 block">Tax ID / VAT</span><span className="text-sm font-bold text-slate-900">{settings.businessTaxId}</span></div>}
-                            </div>
-                        )}
-                    </div>
-                    <div className="mb-8 z-10 relative">
-                        <div className="grid grid-cols-12 gap-4 border-b-2 pb-3 mb-4" style={{ borderColor: settings.brandColor || '#0f172a' }}>
-                            <div className="col-span-6 text-xs font-bold text-slate-900 uppercase tracking-wider">Description</div>
-                            <div className="col-span-2 text-right text-xs font-bold text-slate-900 uppercase tracking-wider">Qty</div>
-                            <div className="col-span-2 text-right text-xs font-bold text-slate-900 uppercase tracking-wider">Rate</div>
-                            <div className="col-span-2 text-right text-xs font-bold text-slate-900 uppercase tracking-wider">Amount</div>
-                        </div>
-                        <div className="space-y-4">
-                            {(selectedInvoiceForDoc.items || []).map((item, idx) => (
-                                <div key={item.id || idx} className="border-b border-slate-100 pb-3 grid grid-cols-12 gap-4 items-start">
-                                    <div className="col-span-6"><span className="font-bold text-slate-800 text-sm block">{item.description}</span></div>
-                                    <div className="col-span-2 text-right text-sm font-medium text-slate-600">{item.quantity}</div>
-                                    <div className="col-span-2 text-right text-sm font-medium text-slate-600">{formatCurrency.format(item.rate)}</div>
-                                    <div className="col-span-2 text-right text-sm font-bold text-slate-900">{formatCurrency.format(item.quantity * item.rate)}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="flex justify-end mt-4 mb-12 z-10 relative">
-                        <div className="w-5/12 space-y-3">
-                            <div className="flex justify-between text-sm"><span className="font-bold text-slate-600">Subtotal</span><span className="font-bold text-slate-900">{formatCurrency.format(selectedInvoiceForDoc.subtotal || selectedInvoiceForDoc.amount)}</span></div>
-                            {selectedInvoiceForDoc.discount ? (<div className="flex justify-between text-sm text-emerald-600"><span className="font-bold">Discount</span><span className="font-bold">-{formatCurrency.format(selectedInvoiceForDoc.discount)}</span></div>) : null}
-                            {selectedInvoiceForDoc.taxRate ? (<div className="flex justify-between text-sm"><span className="font-bold text-slate-600">Tax ({selectedInvoiceForDoc.taxRate}%)</span><span className="font-bold text-slate-900">{formatCurrency.format(((selectedInvoiceForDoc.subtotal || 0) - (selectedInvoiceForDoc.discount || 0)) * (selectedInvoiceForDoc.taxRate / 100))}</span></div>) : null}
-                            {selectedInvoiceForDoc.shipping ? (<div className="flex justify-between text-sm"><span className="font-bold text-slate-600">Shipping</span><span className="font-bold text-slate-900">{formatCurrency.format(selectedInvoiceForDoc.shipping)}</span></div>) : null}
-                            <div className="h-px bg-slate-900 my-2"></div>
-                            <div className="flex justify-between items-end"><span className="font-extrabold text-lg text-slate-900 uppercase tracking-wider">Total</span><span className="font-extrabold text-xl text-slate-900">{formatCurrency.format(selectedInvoiceForDoc.amount)}</span></div>
-                            {selectedInvoiceForDoc.status === 'paid' && <div className="flex justify-between items-center text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded mt-2"><span className="font-bold text-sm uppercase">Amount Paid</span><span className="font-bold">{formatCurrency.format(selectedInvoiceForDoc.amount)}</span></div>}
-                        </div>
-                    </div>
-                    <div className="mt-auto z-10 relative">
-                        <div className="grid grid-cols-2 gap-8 border-t border-slate-100 pt-8">
-                            <div>{selectedInvoiceForDoc.notes && (<><h4 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">Notes</h4><p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{selectedInvoiceForDoc.notes}</p></>)}</div>
-                            <div>{(selectedInvoiceForDoc.terms || settings.payPrefs.length > 0) && (<><h4 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">Terms & Payment</h4>{selectedInvoiceForDoc.terms && <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap mb-3">{selectedInvoiceForDoc.terms}</p>}{settings.payPrefs.length > 0 && (<div className="text-xs font-bold text-slate-600 bg-slate-50 p-3 rounded inline-block w-full">Accepted Methods: {settings.payPrefs.join(', ')}</div>)}</>)}</div>
-                        </div>
-                        <div className="mt-12 text-center text-xs text-slate-600 font-bold uppercase tracking-widest">Thank you for your business</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-      )}
-
-      {isEstimatePdfPreviewOpen && selectedEstimateForDoc && (
-        <div className="fixed inset-0 z-[99999] bg-slate-950/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="relative w-full max-w-[800px] bg-white text-slate-900 shadow-2xl overflow-auto max-h-[90vh] rounded-lg">
-                <div className="sticky top-0 left-0 right-0 bg-white/90 backdrop-blur border-b border-slate-100 p-4 flex justify-between items-center z-50">
-                    <div className="flex items-center gap-2">
-                       {isGeneratingEstimatePdf ? <Loader2 className="animate-spin text-blue-600" /> : <FileText className="text-slate-700" />}
-                       <span className="font-bold text-sm uppercase tracking-wider">
-                         {isGeneratingEstimatePdf ? 'Generating PDF…' : 'Estimate Preview'}
-                       </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setIsEstimatePdfPreviewOpen(false)}
-                        className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
-                        disabled={isGeneratingEstimatePdf}
-                      >
-                        Back to Edit
-                      </button>
-                      <button
-                        onClick={downloadEstimatePdfFromPreview}
-                        className="px-3 py-2 text-xs font-bold rounded-lg bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60"
-                        disabled={isGeneratingEstimatePdf}
-                      >
-                        Download PDF
-                      </button>
-                      <button onClick={() => setIsEstimatePdfPreviewOpen(false)} className="p-2 hover:bg-slate-100 rounded-full" aria-label="Close preview">
-                        <X size={20} />
-                      </button>
-                    </div>
-                </div>
-                <div id="visible-estimate-pdf-preview-content" className="p-8 md:p-12 bg-white min-h-[1000px] w-[794px] mx-auto">
+                <div id="visible-estimate-pdf-preview-content" className="p-8 md:p-12 bg-white min-h-[1000px]">
                     {selectedEstimateForDoc.status === 'void' && <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"><div className="transform -rotate-45 text-red-50 text-[150px] font-extrabold opacity-50 border-8 border-red-50 p-10 rounded-3xl">VOID</div></div>}
                     
                     {/* Header with Business Info */}
@@ -4002,7 +3856,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                         <div className={`flex-1 ${settings.showLogoOnInvoice && settings.logoAlignment === 'center' ? 'w-full' : ''}`}>
                             {settings.showLogoOnInvoice && settings.businessLogo && <img src={settings.businessLogo} alt="Logo" className={`h-20 w-auto object-contain mb-4 ${settings.logoAlignment === 'center' ? 'mx-auto' : ''}`} />}
                             <h1 className="text-3xl font-extrabold uppercase tracking-tight text-slate-900 mb-2 font-brand">{settings.businessName}</h1>
-                            <div className="text-sm text-slate-600 font-medium space-y-1">
+                            <div className="text-sm text-slate-500 font-medium space-y-1">
                                 <p>{settings.ownerName}</p>
                                 {(settings.businessEmail || settings.businessPhone) && <p className={`flex flex-wrap gap-3 ${settings.logoAlignment === 'center' ? 'justify-center' : ''}`}>{settings.businessEmail && <span>{settings.businessEmail}</span>}{settings.businessPhone && <span>• {settings.businessPhone}</span>}</p>}
                                 {settings.businessAddress && <p className="leading-tight pt-1">{settings.businessAddress}</p>}
@@ -4012,10 +3866,10 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                         <div className={`text-left ${settings.showLogoOnInvoice && settings.logoAlignment === 'center' ? 'w-full mt-6 flex flex-col items-center' : 'text-right flex-1'}`}>
                             <h2 className="text-5xl font-extrabold tracking-tighter mb-4 font-brand" style={{ color: settings.brandColor || '#e2e8f0' }}>ESTIMATE</h2>
                             <div className={`space-y-2 ${settings.showLogoOnInvoice && settings.logoAlignment === 'center' ? 'w-full max-w-sm' : ''}`}>
-                                <div className="flex justify-between md:justify-end gap-8"><span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Estimate #</span><span className="text-sm font-bold text-slate-900">{selectedEstimateForDoc.number || selectedEstimateForDoc.id.substring(selectedEstimateForDoc.id.length - 6).toUpperCase()}</span></div>
-                                <div className="flex justify-between md:justify-end gap-8"><span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Date</span><span className="text-sm font-bold text-slate-900">{selectedEstimateForDoc.date}</span></div>
-                                <div className="flex justify-between md:justify-end gap-8"><span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Valid Until</span><span className="text-sm font-bold text-slate-900">{selectedEstimateForDoc.validUntil || ''}</span></div>
-                                {(selectedEstimateForDoc as any).timeline && <div className="flex justify-between md:justify-end gap-8"><span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Timeline</span><span className="text-sm font-bold text-slate-900">{(selectedEstimateForDoc as any).timeline}</span></div>}
+                                <div className="flex justify-between md:justify-end gap-8"><span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Estimate #</span><span className="text-sm font-bold text-slate-900">{selectedEstimateForDoc.number || selectedEstimateForDoc.id.substring(selectedEstimateForDoc.id.length - 6).toUpperCase()}</span></div>
+                                <div className="flex justify-between md:justify-end gap-8"><span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Date</span><span className="text-sm font-bold text-slate-900">{selectedEstimateForDoc.date}</span></div>
+                                <div className="flex justify-between md:justify-end gap-8"><span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Valid Until</span><span className="text-sm font-bold text-slate-900">{selectedEstimateForDoc.validUntil || ''}</span></div>
+                                {(selectedEstimateForDoc as any).timeline && <div className="flex justify-between md:justify-end gap-8"><span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Timeline</span><span className="text-sm font-bold text-slate-900">{(selectedEstimateForDoc as any).timeline}</span></div>}
                             </div>
                         </div>
                     </div>
@@ -4033,10 +3887,10 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                     {/* Client Info */}
                     <div className="flex gap-10 mb-8 z-10 relative">
                         <div className="flex-1">
-                            <h3 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-3">Prepared For</h3>
+                            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Prepared For</h3>
                             <div className="text-lg font-bold text-slate-900">{selectedEstimateForDoc.client}</div>
                             {selectedEstimateForDoc.clientCompany && <div className="text-base font-semibold text-slate-700 mt-0.5">{selectedEstimateForDoc.clientCompany}</div>}
-                            <div className="text-sm text-slate-600 mt-1 space-y-0.5">
+                            <div className="text-sm text-slate-500 mt-1 space-y-0.5">
                               {selectedEstimateForDoc.clientEmail && <div>{selectedEstimateForDoc.clientEmail}</div>}
                               {(selectedEstimateForDoc as any).clientPhone && <div>{(selectedEstimateForDoc as any).clientPhone}</div>}
                               {selectedEstimateForDoc.clientAddress && <div className="whitespace-pre-line">{selectedEstimateForDoc.clientAddress}</div>}
@@ -4044,9 +3898,9 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                         </div>
                         {(selectedEstimateForDoc.poNumber || settings.businessTaxId) && (
                             <div className="flex-1 text-right">
-                                <h3 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-3">Reference</h3>
-                                {selectedEstimateForDoc.poNumber && <div className="mb-2"><span className="text-xs font-bold text-slate-600 block">Client Ref / PO</span><span className="text-sm font-bold text-slate-900">{selectedEstimateForDoc.poNumber}</span></div>}
-                                {settings.businessTaxId && <div><span className="text-xs font-bold text-slate-600 block">Tax ID / VAT</span><span className="text-sm font-bold text-slate-900">{settings.businessTaxId}</span></div>}
+                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Reference</h3>
+                                {selectedEstimateForDoc.poNumber && <div className="mb-2"><span className="text-xs font-bold text-slate-500 block">Client Ref / PO</span><span className="text-sm font-bold text-slate-900">{selectedEstimateForDoc.poNumber}</span></div>}
+                                {settings.businessTaxId && <div><span className="text-xs font-bold text-slate-500 block">Tax ID / VAT</span><span className="text-sm font-bold text-slate-900">{settings.businessTaxId}</span></div>}
                             </div>
                         )}
                     </div>
@@ -4054,7 +3908,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                     {/* Scope of Work */}
                     {(selectedEstimateForDoc as any).scopeOfWork && (
                       <div className="mb-8 z-10 relative">
-                        <h3 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-3">Scope of Work</h3>
+                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Scope of Work</h3>
                         <div className="bg-slate-50 rounded-lg p-4">
                           <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{(selectedEstimateForDoc as any).scopeOfWork}</p>
                         </div>
@@ -4084,9 +3938,9 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                     {/* Totals */}
                     <div className="flex justify-end mt-4 mb-8 z-10 relative">
                         <div className="w-5/12 space-y-3">
-                            <div className="flex justify-between text-sm"><span className="font-bold text-slate-600">Subtotal</span><span className="font-bold text-slate-900">{formatCurrency.format(selectedEstimateForDoc.subtotal || selectedEstimateForDoc.amount)}</span></div>
+                            <div className="flex justify-between text-sm"><span className="font-bold text-slate-500">Subtotal</span><span className="font-bold text-slate-900">{formatCurrency.format(selectedEstimateForDoc.subtotal || selectedEstimateForDoc.amount)}</span></div>
                             {selectedEstimateForDoc.discount ? (<div className="flex justify-between text-sm text-emerald-600"><span className="font-bold">Discount</span><span className="font-bold">-{formatCurrency.format(selectedEstimateForDoc.discount)}</span></div>) : null}
-                            {selectedEstimateForDoc.taxRate ? (<div className="flex justify-between text-sm"><span className="font-bold text-slate-600">Tax ({selectedEstimateForDoc.taxRate}%)</span><span className="font-bold text-slate-900">{formatCurrency.format(((selectedEstimateForDoc.subtotal || 0) - (selectedEstimateForDoc.discount || 0)) * (selectedEstimateForDoc.taxRate / 100))}</span></div>) : null}
+                            {selectedEstimateForDoc.taxRate ? (<div className="flex justify-between text-sm"><span className="font-bold text-slate-500">Tax ({selectedEstimateForDoc.taxRate}%)</span><span className="font-bold text-slate-900">{formatCurrency.format(((selectedEstimateForDoc.subtotal || 0) - (selectedEstimateForDoc.discount || 0)) * (selectedEstimateForDoc.taxRate / 100))}</span></div>) : null}
                             <div className="h-px bg-slate-900 my-2"></div>
                             <div className="flex justify-between items-end"><span className="font-extrabold text-lg text-slate-900 uppercase tracking-wider">Estimated Total</span><span className="font-extrabold text-xl text-slate-900">{formatCurrency.format(selectedEstimateForDoc.amount)}</span></div>
                         </div>
@@ -4095,7 +3949,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                     {/* Exclusions */}
                     {(selectedEstimateForDoc as any).exclusions && (
                       <div className="mb-8 z-10 relative" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                        <h4 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">Not Included in This Estimate</h4>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Not Included in This Estimate</h4>
                         <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
                           <p className="text-sm text-amber-800 leading-relaxed whitespace-pre-wrap">{(selectedEstimateForDoc as any).exclusions}</p>
                         </div>
@@ -4108,7 +3962,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                             <div>
                               {selectedEstimateForDoc.notes && (
                                 <>
-                                  <h4 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">Notes</h4>
+                                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Notes</h4>
                                   <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{selectedEstimateForDoc.notes}</p>
                                 </>
                               )}
@@ -4116,7 +3970,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                             <div>
                               {selectedEstimateForDoc.terms && (
                                 <>
-                                  <h4 className="text-xs font-bold text-slate-600 uppercase tracking-widest mb-2">Terms & Conditions</h4>
+                                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Terms & Conditions</h4>
                                   <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap mb-3">{selectedEstimateForDoc.terms}</p>
                                 </>
                               )}
@@ -4136,16 +3990,16 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                           <div className="grid grid-cols-2 gap-12">
                             <div>
                               <div className="border-b border-slate-300 pb-8 mb-2"></div>
-                              <p className="text-xs text-slate-600 font-bold uppercase tracking-wider">Client Signature</p>
+                              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Client Signature</p>
                             </div>
                             <div>
                               <div className="border-b border-slate-300 pb-8 mb-2"></div>
-                              <p className="text-xs text-slate-600 font-bold uppercase tracking-wider">Date</p>
+                              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Date</p>
                             </div>
                           </div>
                         </div>
 
-                        <div className="mt-12 text-center text-xs text-slate-600 font-bold uppercase tracking-widest">Thank you for considering our services</div>
+                        <div className="mt-12 text-center text-xs text-slate-400 font-bold uppercase tracking-widest">Thank you for considering our services</div>
                     </div>
                 </div>
             </div>
@@ -4558,7 +4412,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                    </div>
                 ))}
               </div>
-              <div className="text-[10px] text-slate-600 font-medium text-center mt-2 uppercase tracking-wide">Exports to Downloads</div>
+              <div className="text-[10px] text-slate-400 font-medium text-center mt-2 uppercase tracking-wide">Exports to Downloads</div>
             </div>
           </div>
         )}
@@ -4649,10 +4503,10 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                       <div key={item.listId || item.id} className={`bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 hover:shadow-lg transition-all shadow-md cursor-pointer ${isOverdue && !isVoid ? 'border-l-4 border-l-red-500' : ''} ${isVoid ? 'opacity-75 grayscale-[0.5] border-l-4 border-l-slate-400' : ''}`} onClick={() => handleEditItem(item)}>
                         {/* Top Section: Icon, Name, Description */}
                         <div className="flex items-start gap-4 mb-4">
-                          <div className={`w-12 h-12 bg-slate-100 dark:bg-blue-500/10 text-slate-600 dark:text-blue-400 rounded-md flex items-center justify-center flex-shrink-0 ${isVoid ? 'bg-slate-200 dark:bg-slate-800 text-slate-600' : ''}`}>{isVoid ? <Ban size={20} strokeWidth={1.5} /> : isRecurring ? <Repeat size={20} strokeWidth={1.5} className="text-blue-500" /> : <FileText size={20} strokeWidth={1.5} />}</div>
+                          <div className={`w-12 h-12 bg-slate-100 dark:bg-blue-500/10 text-slate-600 dark:text-blue-400 rounded-md flex items-center justify-center flex-shrink-0 ${isVoid ? 'bg-slate-200 dark:bg-slate-800 text-slate-400' : ''}`}>{isVoid ? <Ban size={20} strokeWidth={1.5} /> : isRecurring ? <Repeat size={20} strokeWidth={1.5} className="text-blue-500" /> : <FileText size={20} strokeWidth={1.5} />}</div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <div className={`font-bold text-slate-900 dark:text-white text-lg ${isVoid ? 'line-through text-slate-600' : ''}`}>{inv.client}</div>
+                              <div className={`font-bold text-slate-900 dark:text-white text-lg ${isVoid ? 'line-through text-slate-400' : ''}`}>{inv.client}</div>
                               {isRecurring && <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Recurring</span>}
                             </div>
                             <div className="text-sm font-medium text-slate-600 dark:text-slate-300">{inv.description}</div>
@@ -4706,9 +4560,9 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                       
                       {/* Bottom Row: Action Buttons */}
                       <div className="flex items-center justify-end gap-1 pt-2 border-t border-slate-100 dark:border-slate-800">
-                           <button onClick={(e) => { e.stopPropagation(); if (isInvoice) duplicateInvoice(item as Invoice); else duplicateTransaction(item as Transaction); }} className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95" title="Duplicate"><Copy size={18}/></button>
-                           <button onClick={(e) => { e.stopPropagation(); handleEditItem(item); }} className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95" title="Edit"><Edit3 size={18}/></button>
-                           <button onClick={(e) => { e.stopPropagation(); if (isInvoice) deleteInvoice(item); else deleteTransaction(item.id); }} className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95" title="Delete"><Trash2 size={18}/></button>
+                           <button onClick={(e) => { e.stopPropagation(); if (isInvoice) duplicateInvoice(item as Invoice); else duplicateTransaction(item as Transaction); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all active:scale-95" title="Duplicate"><Copy size={18}/></button>
+                           <button onClick={(e) => { e.stopPropagation(); handleEditItem(item); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-300 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95" title="Edit"><Edit3 size={18}/></button>
+                           <button onClick={(e) => { e.stopPropagation(); if (isInvoice) deleteInvoice(item); else deleteTransaction(item.id); }} className="p-2 rounded-lg text-slate-400 dark:text-slate-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95" title="Delete"><Trash2 size={18}/></button>
                       </div>
                    </div>
                   );
@@ -4811,10 +4665,10 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   <div key={inv.id} className={`bg-white dark:bg-slate-900 p-6 rounded-lg border border-slate-200 dark:border-slate-800 group hover:border-blue-500/30 hover:shadow-lg transition-all shadow-md cursor-pointer ${isOverdue && !isVoid ? 'border-l-4 border-l-red-500' : ''} ${isVoid ? 'opacity-75 grayscale-[0.5] border-l-4 border-l-slate-400' : ''}`} onClick={() => handleEditItem({ dataType: 'invoice', original: inv })}>
                     {/* Top Section: Icon, Name, Description */}
                     <div className="flex items-start gap-4 mb-4">
-                      <div className={`w-12 h-12 bg-slate-100 dark:bg-blue-500/10 text-slate-600 dark:text-blue-400 rounded-md flex items-center justify-center flex-shrink-0 ${isVoid ? 'bg-slate-200 dark:bg-slate-800 text-slate-600' : ''}`}>{isVoid ? <Ban size={20} strokeWidth={1.5} /> : isRecurring ? <Repeat size={20} strokeWidth={1.5} className="text-blue-500" /> : <FileText size={20} strokeWidth={1.5} />}</div>
+                      <div className={`w-12 h-12 bg-slate-100 dark:bg-blue-500/10 text-slate-600 dark:text-blue-400 rounded-md flex items-center justify-center flex-shrink-0 ${isVoid ? 'bg-slate-200 dark:bg-slate-800 text-slate-400' : ''}`}>{isVoid ? <Ban size={20} strokeWidth={1.5} /> : isRecurring ? <Repeat size={20} strokeWidth={1.5} className="text-blue-500" /> : <FileText size={20} strokeWidth={1.5} />}</div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <div className={`font-bold text-slate-900 dark:text-white text-lg ${isVoid ? 'line-through text-slate-600' : ''}`}>{inv.client}</div>
+                          <div className={`font-bold text-slate-900 dark:text-white text-lg ${isVoid ? 'line-through text-slate-400' : ''}`}>{inv.client}</div>
                           {inv.number && <span className="text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded font-mono font-bold">{inv.number}</span>}
                           {isRecurring && <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Recurring</span>}
                         </div>
@@ -4872,7 +4726,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                       .map(est => {
                         const isExpired = est.validUntil ? new Date(est.validUntil) < new Date() : false;
                         const statusLabel = est.status === 'accepted' ? 'Accepted' : est.status === 'declined' ? 'Declined' : est.status === 'sent' ? 'Sent' : est.status === 'void' ? 'Void' : 'Draft';
-                        const statusClass = est.status === 'accepted' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : est.status === 'declined' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300' : est.status === 'sent' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300' : est.status === 'void' ? 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-600' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+                        const statusClass = est.status === 'accepted' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : est.status === 'declined' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300' : est.status === 'sent' ? 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300' : est.status === 'void' ? 'bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
                         const isVoid = est.status === 'void';
                         
                         // Follow-up status calculation
@@ -5414,8 +5268,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                                             {advSection === 'deductions' && (
                                                 <div className="p-4 bg-white dark:bg-slate-950 animate-in slide-in-from-top-2">
                                                     <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg mb-4">
-                                                        <button onClick={() => setPlannerData(p => ({...p, deductionMode: 'standard'}))} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${plannerData.deductionMode === 'standard' ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-600'}`}>Standard</button>
-                                                        <button onClick={() => setPlannerData(p => ({...p, deductionMode: 'itemized'}))} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${plannerData.deductionMode === 'itemized' ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-600'}`}>Itemized</button>
+                                                        <button onClick={() => setPlannerData(p => ({...p, deductionMode: 'standard'}))} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${plannerData.deductionMode === 'standard' ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500'}`}>Standard</button>
+                                                        <button onClick={() => setPlannerData(p => ({...p, deductionMode: 'itemized'}))} className={`flex-1 py-1.5 text-xs font-bold uppercase tracking-wider rounded-md transition-all ${plannerData.deductionMode === 'itemized' ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500'}`}>Itemized</button>
                                                     </div>
                                                     {plannerData.deductionMode === 'itemized' ? (
                                                         <div><label className="text-xs font-bold text-slate-600 dark:text-slate-300 block mb-1">Total Itemized Deductions</label><input type="number" value={plannerData.itemizedDeduction || ''} onChange={e => setPlannerData(p => ({...p, itemizedDeduction: Number(e.target.value)}))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm outline-none" placeholder="0"/></div>
@@ -5530,7 +5384,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                                                     
                                                     <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-900">
                                                         <div className="text-xs font-bold uppercase text-blue-600 dark:text-blue-400 mb-1">Quarterly Suggestion</div>
-                                                        <div className="text-lg font-bold text-slate-900 dark:text-white">{formatCurrency.format(plannerResults.quarterlySuggestion)} <span className="text-xs font-normal text-slate-600">x 4 payments</span></div>
+                                                        <div className="text-lg font-bold text-slate-900 dark:text-white">{formatCurrency.format(plannerResults.quarterlySuggestion)} <span className="text-xs font-normal text-slate-500">x 4 payments</span></div>
                                                         <div className="text-[10px] text-slate-600 dark:text-slate-300 mt-2">
                                                             Next Due Dates: Apr 15, Jun 15, Sep 15, Jan 15.
                                                             <br/>Dates may shift for weekends/holidays.
