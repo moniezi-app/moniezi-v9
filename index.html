@@ -89,6 +89,31 @@
         opacity: 0.65;
         margin-top: 6px;
       }
+    
+      /* ========================================
+         PDF PREVIEW / EXPORT READABILITY OVERRIDES
+         (applies to Invoice + Estimate preview AND exported PDF)
+         ======================================== */
+      #visible-pdf-preview-content .text-slate-300,
+      #visible-estimate-pdf-preview-content .text-slate-300 { color: #64748b !important; } /* slate-500 */
+
+      #visible-pdf-preview-content .text-slate-400,
+      #visible-estimate-pdf-preview-content .text-slate-400 { color: #475569 !important; } /* slate-600 */
+
+      #visible-pdf-preview-content .text-slate-500,
+      #visible-estimate-pdf-preview-content .text-slate-500 { color: #334155 !important; } /* slate-700 */
+
+      #visible-pdf-preview-content .text-slate-600,
+      #visible-estimate-pdf-preview-content .text-slate-600 { color: #1e293b !important; } /* slate-800 */
+
+      /* Ensure subtle lines/backgrounds don't wash out text */
+      #visible-pdf-preview-content .bg-slate-50,
+      #visible-estimate-pdf-preview-content .bg-slate-50 { background-color: #f8fafc !important; }
+
+      /* Slightly strengthen thin dividers for mobile viewing */
+      #visible-pdf-preview-content .border-slate-100,
+      #visible-estimate-pdf-preview-content .border-slate-100 { border-color: #e2e8f0 !important; }
+
     </style>
 
 
@@ -488,36 +513,7 @@
     </script>
 
     <link rel="stylesheet" href="index.css" />
-  
-  <!-- PDF Preview readability overrides (ensure readable text inside white preview even in dark mode) -->
-  <style>
-    /* Force preview "paper" to stay readable regardless of app theme */
-    #visible-pdf-preview-content,
-    #visible-estimate-pdf-preview-content{
-      background: #ffffff !important;
-      color: #0f172a !important; /* slate-900 */
-    }
-    /* Many PDF template labels use very light slate colors; override them in PREVIEW only */
-    #visible-pdf-preview-content .text-slate-200,
-    #visible-pdf-preview-content .text-slate-300,
-    #visible-pdf-preview-content .text-slate-400,
-    #visible-estimate-pdf-preview-content .text-slate-200,
-    #visible-estimate-pdf-preview-content .text-slate-300,
-    #visible-estimate-pdf-preview-content .text-slate-400{
-      color: #475569 !important; /* slate-600 */
-    }
-    #visible-pdf-preview-content .text-slate-500,
-    #visible-estimate-pdf-preview-content .text-slate-500{
-      color: #334155 !important; /* slate-700 */
-    }
-    /* Keep truly important numbers dark */
-    #visible-pdf-preview-content .text-slate-900,
-    #visible-estimate-pdf-preview-content .text-slate-900{
-      color: #0f172a !important;
-    }
-  </style>
-
-</head>
+  </head>
 
   <body
     class="antialiased bg-slatebg dark:bg-slate-950 text-slate-900 dark:text-slate-50 transition-colors duration-300 selection:bg-blue-500/30 selection:text-blue-600 dark:selection:text-blue-200"
