@@ -89,31 +89,6 @@
         opacity: 0.65;
         margin-top: 6px;
       }
-    
-      /* ========================================
-         PDF PREVIEW / EXPORT READABILITY OVERRIDES
-         (applies to Invoice + Estimate preview AND exported PDF)
-         ======================================== */
-      #visible-pdf-preview-content .text-slate-300,
-      #visible-estimate-pdf-preview-content .text-slate-300 { color: #64748b !important; } /* slate-500 */
-
-      #visible-pdf-preview-content .text-slate-400,
-      #visible-estimate-pdf-preview-content .text-slate-400 { color: #475569 !important; } /* slate-600 */
-
-      #visible-pdf-preview-content .text-slate-500,
-      #visible-estimate-pdf-preview-content .text-slate-500 { color: #334155 !important; } /* slate-700 */
-
-      #visible-pdf-preview-content .text-slate-600,
-      #visible-estimate-pdf-preview-content .text-slate-600 { color: #1e293b !important; } /* slate-800 */
-
-      /* Ensure subtle lines/backgrounds don't wash out text */
-      #visible-pdf-preview-content .bg-slate-50,
-      #visible-estimate-pdf-preview-content .bg-slate-50 { background-color: #f8fafc !important; }
-
-      /* Slightly strengthen thin dividers for mobile viewing */
-      #visible-pdf-preview-content .border-slate-100,
-      #visible-estimate-pdf-preview-content .border-slate-100 { border-color: #e2e8f0 !important; }
-
     </style>
 
 
@@ -513,6 +488,28 @@
     </script>
 
     <link rel="stylesheet" href="index.css" />
+  
+    <style>
+      /* PDF Preview readability (Invoice + Estimate). Scoped to preview content only. */
+      #visible-pdf-preview-content .text-slate-100,
+      #visible-pdf-preview-content .text-slate-200,
+      #visible-pdf-preview-content .text-slate-300,
+      #visible-pdf-preview-content .text-slate-400,
+      #visible-pdf-preview-content .text-slate-500,
+      #visible-estimate-pdf-preview-content .text-slate-100,
+      #visible-estimate-pdf-preview-content .text-slate-200,
+      #visible-estimate-pdf-preview-content .text-slate-300,
+      #visible-estimate-pdf-preview-content .text-slate-400,
+      #visible-estimate-pdf-preview-content .text-slate-500 {
+        color: #374151 !important; /* ~gray-700 */
+      }
+
+      #visible-pdf-preview-content .text-slate-600,
+      #visible-estimate-pdf-preview-content .text-slate-600 {
+        color: #1f2937 !important; /* ~gray-800 */
+      }
+    </style>
+
   </head>
 
   <body
