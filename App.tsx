@@ -3220,104 +3220,117 @@ TIMELINE: Assumes 48-72hr feedback turnaround.`,
      setInvoices(prev => prev.map(i => i.id === updatedInvoice.id ? updatedInvoice : i));
      setSelectedInvoiceForDoc(updatedInvoice); setIsPdfPreviewOpen(true);
   };
+
+// PDF export should NOT auto-download when preview opens.
+// User opens preview first, then explicitly clicks "Download PDF".
+const downloadInvoicePdfFromPreview = async () => {
+  if (!selectedInvoiceForDoc || isGeneratingPdf) return;
+  setIsGeneratingPdf(true);
+  try {
+    // allow modal to render fully
+    await new Promise(resolve => setTimeout(resolve, 150));
+    const element = document.getElementById('visible-pdf-preview-content');
+    if (!element) throw new Error('Preview element not found');
+    const images = Array.from(element.querySelectorAll('img'));
+    await Promise.all(images.map(img => {
+      // @ts-ignore
+      if ((img as any).complete) return Promise.resolve();
+      return new Promise(resolve => {
+        // @ts-ignore
+        img.onload = resolve;
+        // @ts-ignore
+        img.onerror = resolve;
+        setTimeout(resolve, 2000);
+      });
+    }));
+
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: `Invoice_${selectedInvoiceForDoc.client.replace(/[^a-z0-9]/gi, '_')}_${selectedInvoiceForDoc.date}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    };
+
+    await (window as any).html2pdf().set(opt).from(element).save();
+    showToast('PDF Downloaded', 'success');
+    setTimeout(() => setIsPdfPreviewOpen(false), 300);
+  } catch (error) {
+    console.error('PDF failed:', error);
+    showToast('Export failed', 'error');
+  } finally {
+    setIsGeneratingPdf(false);
+  }
+};
+
+const downloadEstimatePdfFromPreview = async () => {
+  if (!selectedEstimateForDoc || isGeneratingEstimatePdf) return;
+  setIsGeneratingEstimatePdf(true);
+  try {
+    await new Promise(resolve => setTimeout(resolve, 150));
+    const element = document.getElementById('visible-estimate-pdf-preview-content');
+    if (!element) throw new Error('Preview element not found');
+    const images = Array.from(element.querySelectorAll('img'));
+    await Promise.all(images.map(img => {
+      // @ts-ignore
+      if ((img as any).complete) return Promise.resolve();
+      return new Promise(resolve => {
+        // @ts-ignore
+        img.onload = resolve;
+        // @ts-ignore
+        img.onerror = resolve;
+        setTimeout(resolve, 2000);
+      });
+    }));
+
+    // Keep exact same PDF sizing logic as current code (dynamic height)
+    const contentWidth = element.scrollWidth;
+    const contentHeight = element.scrollHeight;
+    const pxToMm = 0.264583;
+    const pageWidthMm = 210; // A4 width
+    const marginMm = 10;
+    const contentWidthMm = pageWidthMm - (marginMm * 2);
+    const scaleFactor = contentWidthMm / (contentWidth * pxToMm);
+    const pageHeightMm = Math.ceil((contentHeight * pxToMm * scaleFactor) + (marginMm * 2) + 10);
+
+    const opt = {
+      margin: [marginMm, marginMm, marginMm, marginMm],
+      filename: `Estimate_${selectedEstimateForDoc.client.replace(/[^a-z0-9]/gi, '_')}_${selectedEstimateForDoc.date}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        scrollY: 0,
+        scrollX: 0,
+        windowWidth: contentWidth,
+        windowHeight: contentHeight,
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: [pageWidthMm, Math.max(297, pageHeightMm)],
+        orientation: 'portrait',
+        compress: true,
+      },
+      pagebreak: { mode: 'avoid-all', avoid: ['tr', 'td', '.page-break-avoid'] },
+    };
+
+    await (window as any).html2pdf().set(opt).from(element).save();
+    showToast('PDF Downloaded', 'success');
+    setTimeout(() => setIsEstimatePdfPreviewOpen(false), 300);
+  } catch (error) {
+    console.error('Estimate PDF failed:', error);
+    showToast('Export failed', 'error');
+  } finally {
+    setIsGeneratingEstimatePdf(false);
+  }
+};
+
+
   const handleExportPLPDF = () => {
     setPlExportRequested(true);
     setShowPLPreview(true);
   };
-
-
-  
-  useEffect(() => {
-     let isMounted = true;
-     const generatePdf = async () => {
-         if (!isPdfPreviewOpen || !selectedInvoiceForDoc || isGeneratingPdf) return;
-         setIsGeneratingPdf(true);
-         try {
-             await new Promise(resolve => setTimeout(resolve, 800));
-             if (!isMounted) return;
-             const element = document.getElementById('visible-pdf-preview-content');
-             if (!element) throw new Error("Preview element not found");
-             const images = Array.from(element.querySelectorAll('img'));
-             await Promise.all(images.map(img => {
-                 if (img.complete) return Promise.resolve();
-                 return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; setTimeout(resolve, 2000); });
-             }));
-             const opt = { margin: [10, 10, 10, 10], filename: `Invoice_${selectedInvoiceForDoc.client.replace(/[^a-z0-9]/gi, '_')}_${selectedInvoiceForDoc.date}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
-             await (window as any).html2pdf().set(opt).from(element).save();
-             if (isMounted) { showToast("PDF Downloaded", "success"); setTimeout(() => setIsPdfPreviewOpen(false), 1000); }
-         } catch (error) { console.error("PDF failed:", error); if (isMounted) showToast("Export failed", "error"); } finally { if (isMounted) setIsGeneratingPdf(false); }
-     };
-     if (isPdfPreviewOpen) generatePdf();
-     return () => { isMounted = false; };
-  }, [isPdfPreviewOpen, selectedInvoiceForDoc]);
-
-  // Auto-generate Estimate PDF when preview opens
-  useEffect(() => {
-     let isMounted = true;
-     const generatePdf = async () => {
-         if (!isEstimatePdfPreviewOpen || !selectedEstimateForDoc || isGeneratingEstimatePdf) return;
-         setIsGeneratingEstimatePdf(true);
-         try {
-             await new Promise(resolve => setTimeout(resolve, 800));
-             if (!isMounted) return;
-             const element = document.getElementById('visible-estimate-pdf-preview-content');
-             if (!element) throw new Error('Preview element not found');
-             const images = Array.from(element.querySelectorAll('img'));
-             await Promise.all(images.map(img => {
-                 // @ts-ignore
-                 if ((img as any).complete) return Promise.resolve();
-                 return new Promise(resolve => {
-                   // @ts-ignore
-                   img.onload = resolve;
-                   // @ts-ignore
-                   img.onerror = resolve;
-                   setTimeout(resolve, 2000);
-                 });
-             }));
-             
-             // Calculate the actual content height for pageless PDF
-             const contentWidth = element.scrollWidth;
-             const contentHeight = element.scrollHeight;
-             // Convert pixels to mm (assuming 96 DPI: 1 inch = 25.4mm, 96px = 25.4mm, so 1px = 0.264583mm)
-             // But html2canvas uses scale:2, so we need to account for that
-             const pxToMm = 0.264583;
-             const pageWidthMm = 210; // A4 width
-             const marginMm = 10;
-             const contentWidthMm = pageWidthMm - (marginMm * 2); // 190mm usable width
-             // Calculate scale factor based on content width fitting into page width
-             const scaleFactor = contentWidthMm / (contentWidth * pxToMm);
-             // Calculate page height based on scaled content height + margins
-             const pageHeightMm = Math.ceil((contentHeight * pxToMm * scaleFactor) + (marginMm * 2) + 10); // +10 for safety
-             
-             const opt = { 
-              margin: [marginMm, marginMm, marginMm, marginMm], 
-              filename: `Estimate_${selectedEstimateForDoc.client.replace(/[^a-z0-9]/gi, '_')}_${selectedEstimateForDoc.date}.pdf`, 
-              image: { type: 'jpeg', quality: 0.98 }, 
-              html2canvas: { 
-                scale: 2, 
-                useCORS: true, 
-                backgroundColor: '#ffffff', 
-                scrollY: 0,
-                scrollX: 0,
-                windowWidth: contentWidth,
-                windowHeight: contentHeight
-              }, 
-              jsPDF: { 
-                unit: 'mm', 
-                format: [pageWidthMm, Math.max(297, pageHeightMm)], // A4 width, dynamic height (min A4 height)
-                orientation: 'portrait',
-                compress: true
-              },
-              pagebreak: { mode: 'avoid-all', avoid: ['tr', 'td', '.page-break-avoid'] }
-            };
-             await (window as any).html2pdf().set(opt).from(element).save();
-             if (isMounted) { showToast('PDF Downloaded', 'success'); setTimeout(() => setIsEstimatePdfPreviewOpen(false), 1000); }
-         } catch (error) { console.error('Estimate PDF failed:', error); if (isMounted) showToast('Export failed', 'error'); } finally { if (isMounted) setIsGeneratingEstimatePdf(false); }
-     };
-     if (isEstimatePdfPreviewOpen) generatePdf();
-     return () => { isMounted = false; };
-  }, [isEstimatePdfPreviewOpen, selectedEstimateForDoc]);
-
 
   useEffect(() => {
     let isMounted = true;
@@ -3847,10 +3860,30 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
             <div className="relative w-full max-w-[800px] bg-white text-slate-900 shadow-2xl overflow-y-auto max-h-[90vh] rounded-lg">
                 <div className="sticky top-0 left-0 right-0 bg-white/90 backdrop-blur border-b border-slate-100 p-4 flex justify-between items-center z-50">
                     <div className="flex items-center gap-2">
-                       {isGeneratingPdf ? <Loader2 className="animate-spin text-blue-600" /> : <Download className="text-emerald-600" />}
-                       <span className="font-bold text-sm uppercase tracking-wider">{isGeneratingPdf ? 'Generating PDF...' : 'Previewing Invoice'}</span>
+                       {isGeneratingPdf ? <Loader2 className="animate-spin text-blue-600" /> : <FileText className="text-slate-700" />}
+                       <span className="font-bold text-sm uppercase tracking-wider">
+                         {isGeneratingPdf ? 'Generating PDF…' : 'Invoice Preview'}
+                       </span>
                     </div>
-                    <button onClick={() => setIsPdfPreviewOpen(false)} className="p-2 hover:bg-slate-100 rounded-full"><X size={20} /></button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setIsPdfPreviewOpen(false)}
+                        className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
+                        disabled={isGeneratingPdf}
+                      >
+                        Back to Edit
+                      </button>
+                      <button
+                        onClick={downloadInvoicePdfFromPreview}
+                        className="px-3 py-2 text-xs font-bold rounded-lg bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60"
+                        disabled={isGeneratingPdf}
+                      >
+                        Download PDF
+                      </button>
+                      <button onClick={() => setIsPdfPreviewOpen(false)} className="p-2 hover:bg-slate-100 rounded-full" aria-label="Close preview">
+                        <X size={20} />
+                      </button>
+                    </div>
                 </div>
                 <div id="visible-pdf-preview-content" className="p-8 md:p-12 bg-white min-h-[1000px]">
                     {selectedInvoiceForDoc.status === 'void' && <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"><div className="transform -rotate-45 text-red-50 text-[150px] font-extrabold opacity-50 border-8 border-red-50 p-10 rounded-3xl">VOID</div></div>}
@@ -3936,10 +3969,30 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
             <div className="relative w-full max-w-[800px] bg-white text-slate-900 shadow-2xl overflow-y-auto max-h-[90vh] rounded-lg">
                 <div className="sticky top-0 left-0 right-0 bg-white/90 backdrop-blur border-b border-slate-100 p-4 flex justify-between items-center z-50">
                     <div className="flex items-center gap-2">
-                       {(isGeneratingEstimatePdf) ? <Loader2 className="animate-spin text-blue-600" /> : <Download className="text-emerald-600" />}
-                       <span className="font-bold text-sm uppercase tracking-wider">{(isGeneratingEstimatePdf) ? 'Generating PDF...' : 'Previewing Estimate'}</span>
+                       {isGeneratingEstimatePdf ? <Loader2 className="animate-spin text-blue-600" /> : <FileText className="text-slate-700" />}
+                       <span className="font-bold text-sm uppercase tracking-wider">
+                         {isGeneratingEstimatePdf ? 'Generating PDF…' : 'Estimate Preview'}
+                       </span>
                     </div>
-                    <button onClick={() => setIsEstimatePdfPreviewOpen(false)} className="p-2 hover:bg-slate-100 rounded-full"><X size={20} /></button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setIsEstimatePdfPreviewOpen(false)}
+                        className="px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
+                        disabled={isGeneratingEstimatePdf}
+                      >
+                        Back to Edit
+                      </button>
+                      <button
+                        onClick={downloadEstimatePdfFromPreview}
+                        className="px-3 py-2 text-xs font-bold rounded-lg bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60"
+                        disabled={isGeneratingEstimatePdf}
+                      >
+                        Download PDF
+                      </button>
+                      <button onClick={() => setIsEstimatePdfPreviewOpen(false)} className="p-2 hover:bg-slate-100 rounded-full" aria-label="Close preview">
+                        <X size={20} />
+                      </button>
+                    </div>
                 </div>
                 <div id="visible-estimate-pdf-preview-content" className="p-8 md:p-12 bg-white min-h-[1000px]">
                     {selectedEstimateForDoc.status === 'void' && <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0"><div className="transform -rotate-45 text-red-50 text-[150px] font-extrabold opacity-50 border-8 border-red-50 p-10 rounded-3xl">VOID</div></div>}
