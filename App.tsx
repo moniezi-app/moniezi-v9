@@ -6401,16 +6401,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                         {/* Header */}
                         <div className="mb-8 pb-6 border-b-2 border-gray-400">
                           <div className="flex items-start gap-4">
-                            {settings.businessLogo ? (
-                              <img
-                                src={settings.businessLogo}
-                                alt={`${settings.businessName} logo`}
-                                className="w-14 h-14 object-contain rounded bg-white"
-                                crossOrigin="anonymous"
-                              />
-                            ) : (
-                              <Building size={32} className="mt-1 text-blue-600" />
-                            )}
+                            <Building size={32} className="mt-1 text-blue-600" />
                             <div className="flex-1 min-w-0">
                               <h1 className="text-2xl font-bold text-gray-900 mb-1 text-left">{settings.businessName}</h1>
                               {settings.businessAddress && (
@@ -6788,6 +6779,14 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   {/* Report Header - Left Aligned */}
                   <div className="px-5 py-5 border-b-2 border-gray-300 bg-gray-50">
                     <div>
+                      {settings.businessLogo && (
+                        <img
+                          src={settings.businessLogo}
+                          alt="Logo"
+                          className="h-10 sm:h-14 w-auto object-contain mb-2"
+                          crossOrigin="anonymous"
+                        />
+                      )}
                       <h1 className="text-xl font-bold text-gray-900 uppercase tracking-wide">{settings.businessName}</h1>
                       <h2 className="text-base font-semibold text-gray-700 mt-1">Profit & Loss Statement</h2>
                       <p className="text-sm text-gray-600 mt-2">
