@@ -6401,7 +6401,16 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                         {/* Header */}
                         <div className="mb-8 pb-6 border-b-2 border-gray-400">
                           <div className="flex items-start gap-4">
-                            <Building size={32} className="mt-1 text-blue-600" />
+                            {settings.businessLogo ? (
+                              <img
+                                src={settings.businessLogo}
+                                alt={`${settings.businessName} logo`}
+                                className="w-14 h-14 object-contain rounded bg-white"
+                                crossOrigin="anonymous"
+                              />
+                            ) : (
+                              <Building size={32} className="mt-1 text-blue-600" />
+                            )}
                             <div className="flex-1 min-w-0">
                               <h1 className="text-2xl font-bold text-gray-900 mb-1 text-left">{settings.businessName}</h1>
                               {settings.businessAddress && (
