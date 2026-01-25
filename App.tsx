@@ -6681,7 +6681,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-stretch justify-stretch p-0">
             <div className="bg-gray-100 w-full h-full overflow-hidden flex flex-col">
               {/* Modal Header */}
-              <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-300 bg-white flex-shrink-0">
+              <div className="flex items-center justify-between px-3 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:p-4 border-b border-gray-300 bg-white flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <button onClick={() => setShowProPLPreview(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
