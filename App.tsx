@@ -5522,6 +5522,13 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   {/* Report Header - Left Aligned */}
                   <div className="px-4 py-4 border-b-2 border-gray-300 bg-gray-50">
                     <div>
+                      {settings.businessLogo && (
+                        <img
+                          src={settings.businessLogo}
+                          alt="Logo"
+                          className="h-10 sm:h-14 w-auto object-contain mb-2"
+                        />
+                      )}
                       <h1 className="text-base sm:text-lg font-bold text-gray-900 uppercase tracking-wide">{settings.businessName}</h1>
                       <h2 className="text-sm font-semibold text-gray-700 mt-1">Profit & Loss Statement</h2>
                       <p className="text-xs text-gray-600 mt-1">
