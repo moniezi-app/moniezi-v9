@@ -1,7 +1,7 @@
 {
-  "name": "copy9-moniezi-pro-working_1-3-26",
+  "name": "moniezi-v9",
   "private": true,
-  "version": "0.0.0",
+  "version": "9.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

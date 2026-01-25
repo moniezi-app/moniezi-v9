@@ -7,7 +7,7 @@
 // can reference old hashed JS assets and the app will look "broken" (blank/old UI).
 // IMPORTANT: bump this whenever you deploy a new build to avoid stale cached assets.
 // Bump on every deploy (prevents stale cached index.html referencing old hashed JS)
-const CACHE_VERSION = "moniezi-pwa-v7-2026-01-18";
+const CACHE_VERSION = "moniezi-pwa-v9-2026-01-24";
 const CACHE_NAME = `moniezi-cache-${CACHE_VERSION}`;
 
 // Resolve an asset relative to the service worker scope (works on GitHub Pages subpaths)
